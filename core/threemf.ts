@@ -15,8 +15,9 @@ const ORIGINAL_PATH = 'Printalizer/original.stl';
 export interface PrintalizerData {
   formatVersion: 1;
   app: string;
-  /** Free-form for now; becomes the module edit list in Phase 2. */
+  /** The edits, as the app saved them. */
   edits: unknown[];
+  [key: string]: unknown;
 }
 
 function modelXml(mesh: IndexedMesh, name: string): string {

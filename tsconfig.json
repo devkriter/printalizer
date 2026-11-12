@@ -17,5 +17,5 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["core", "phase0", "app"]
+  "include": ["core", "phase0", "app", "feature-api", "features"]
 }
