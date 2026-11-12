@@ -1,0 +1,28 @@
+{
+  "name": "printalizer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Rewrites STL files so they print better: tented holes, counterbore steps, chamfers and more.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"core/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "phase0:corpus": "node phase0/fetch-corpus.ts",
+    "phase0:run": "node phase0/run.ts",
+    "phase0:print": "node phase0/test-print.ts",
+    "phase0:3mf": "node phase0/threemf-check.ts",
+    "phase0:view": "vite --config phase0/vite.config.ts --port 8792 --strictPort"
+  },
+  "dependencies": {
+    "fflate": "0.8.3",
+    "manifold-3d": "3.5.4",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.5.1",
+    "@types/three": "0.186.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
+  }
+}

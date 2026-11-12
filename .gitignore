@@ -1,0 +1,7 @@
+node_modules/
+dist/
+# Phase 0: copies of other people's models and generated output stay local
+phase0/corpus/
+phase0/out/
+# lists paths on the owner's computer
+phase0/corpus.json
