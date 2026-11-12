@@ -70,4 +70,6 @@ Anyone can add a feature. See [CONTRIBUTING.md](CONTRIBUTING.md) and [features/R
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+Copyright © 2026 Printalizer contributors.
+
+Printalizer is free software under the GNU Affero General Public License, version 3 or (at your option) any later version. See [LICENSE](LICENSE). If you run a modified version for others to use over a network, the AGPL asks you to offer them its source code. The app links to its source in Settings › Help.

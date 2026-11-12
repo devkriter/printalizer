@@ -94,6 +94,10 @@ export function Settings({ s }: { s: State }) {
               <div className="txt"><span className="nm">Tutorial</span><div className="desc">The basic steps, from opening a file to export</div></div>
               <button type="button" className="btn" onClick={() => A.setPanel('tour')}>Show tutorial</button>
             </div>
+            <div className="set-row">
+              <div className="txt"><span className="nm">Source code</span><div className="desc">Free software under the GNU AGPL, version 3 or later</div></div>
+              <a className="btn" href="https://github.com/devkriter/printalizer" target="_blank" rel="noopener noreferrer">Open on GitHub</a>
+            </div>
           </div>
         </div>
       </div>

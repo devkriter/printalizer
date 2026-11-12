@@ -32,4 +32,11 @@ Ideas that fit well:
 
 ## Licence
 
-By contributing you agree your work is released under the MIT licence. Don't copy code from GPL projects (OrcaSlicer and PrusaSlicer are AGPL). Reimplementing an idea in your own code is fine.
+Printalizer is licensed AGPL-3.0-or-later. By contributing you agree your work is released under the same licence.
+
+Code from projects under licences compatible with it may be included, as long as their copyright and licence notices are kept with the code and the source is named in the pull request. Compatible licences include:
+- AGPL-3.0 and GPL-3.0 (for example OrcaSlicer and PrusaSlicer),
+- LGPL-3.0,
+- MIT, BSD and Apache-2.0.
+
+GPL-2.0-only code is not compatible.

@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "description": "Rewrites STL files so they print better: tented holes, counterbore steps, chamfers and more.",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
+  "repository": { "type": "git", "url": "https://github.com/devkriter/printalizer.git" },
+  "homepage": "https://github.com/devkriter/printalizer",
   "type": "module",
   "scripts": {
     "dev": "vite --config app/vite.config.ts --port 8793 --strictPort",
