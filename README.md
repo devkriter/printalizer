@@ -1,38 +1,72 @@
 # Printalizer
 
-Printalizer rewrites STL files so they print better: tented holes, counterbore steps, base chamfers and more. It runs entirely in the browser. Models never leave your computer.
-
-**Status:** Phase 1, the app shell. You can open a part, lay it on the bed, check its overhangs and export it. The editing features start in Phase 2.
+Printalizer rewrites STL and 3MF files so they print better: tented holes, 45° threads, bridge steps, a base chamfer and overhang fill. It runs entirely in your browser, and models never leave your computer. Once loaded it works offline and can be installed as an app.
 
 ## Running it
 
 ```bash
 npm install
 npm run dev      # http://localhost:8793
-npm test         # unit tests for core/
-npm run build    # static site in dist/
+npm test         # core tests and automated feature checks
+npm run build    # static site in dist/; host it anywhere
 ```
+
+## Using it
+
+1. **Open** an STL or 3MF. Drop it on the window, or press Ctrl+O. For a file with several objects, pick one.
+2. **Lay it flat.** Click the face that goes on the bed, or press **Auto**, then **Continue**. Only faces the part can rest on light up.
+3. **Pick a tool** on the left (keys 1–5). What it can change is outlined on the model and listed in **Found**.
+   - Click a target to apply it.
+   - Alt+click applies it to every target that matches.
+   - With no tool picked, clicking a target shows its settings with **Apply** (A).
+4. **Adjust.**
+   - Click an edit on the model or in the strip at the bottom to change its settings.
+   - Shift+click selects several edits.
+   - Right-click a tool to change its defaults. Edits you haven't changed follow the new defaults.
+5. **Export.** A 3MF keeps the original and your edits, so it reopens ready to adjust. STL is also offered.
+
+Other tools along the way:
+- **Eraser:** hold E and click an edit to remove it.
+- **Compare:** hold Space to see the original.
+- **See-through (S):** shows features hidden inside the part.
+- **Overhangs (O):** shows what would print over air.
+- **Undo and redo:** Ctrl+Z and Ctrl+Y.
+
+**Settings** (the gear) holds four things:
+- minimal view,
+- shortcut hints,
+- the shortcut editor,
+- the features list.
+
+The tutorial can be shown again from there.
+
+## The features
+
+| Feature | What it does |
+|---|---|
+| [Tented holes](features/tented-holes/README.md) | Gives horizontal holes a 45° roof (or a flat one) so they don't sag. |
+| [45° threads](features/threads-45/README.md) | Re-profiles ISO threads with 45° flanks so they print upright without support. |
+| [Bridge steps](features/bridge-steps/README.md) | Adds sacrificial bridge layers to counterbores that face the bed. |
+| [Base chamfer](features/base-chamfer/README.md) | Chamfers the edge on the bed against elephant's foot. |
+| [Overhang fill](features/overhang-fill/README.md) | Builds a ledge out to 45° so it needs no support. |
+
+Anyone can add a feature. See [CONTRIBUTING.md](CONTRIBUTING.md) and [features/README.md](features/README.md).
 
 ## Layout
 
-- `core/` holds the geometry, shared by the app and the tests:
-  - reading and writing STL and 3MF,
+- **`core/`:** geometry shared by everything:
+  - STL and 3MF,
   - repair,
-  - hole finding,
+  - finding holes and threads,
   - orientation,
   - overhangs.
-- `app/` is the interface. It has React panels and a plain three.js view, plus `worker.ts`, which does all the heavy work off the page.
-- `phase0/` contains the scripts and the results that proved the approach. See [phase0/README.md](phase0/README.md).
-
-## What the app does now
-
-- Opens STL and 3MF files, including Bambu Studio and OrcaSlicer projects. When a file holds several objects, it asks which one to open.
-- Repairs files where that's safe, and says what it changed. It refuses files with large openings instead of guessing.
-- **Lay flat:** click the face that goes on the bed. Only faces the part can actually rest on light up. **Auto** picks the largest such face, and the turn button rotates the part 90°.
-- The part card shows size, volume, triangles, bed contact and overhang area. The overhang map (O) shows overhangs in violet.
-- **Print setup** holds the printer bed, nozzle, layer height and overhang limit. It is saved in the browser.
-- **Export:** 3MF (with the original kept inside) or STL.
-- **Keys:** F resets the view, S toggles see-through, O toggles overhangs, Enter continues from lay flat, and Ctrl+O opens a file.
+- **`feature-api/`:** the feature format (version 1) and the runtime that runs features and combines their edits with Manifold.
+- **`features/`:** the built-in features, one folder each, with samples and automated checks.
+- **`app/`:**
+  - the interface: React panels over a plain three.js view;
+  - the geometry worker.
+- **`tools/`:** `npm run new-feature`.
+- **`phase0/`:** the scripts and results that proved the approach.
 
 ## Licence
 
