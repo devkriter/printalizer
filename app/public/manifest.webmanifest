@@ -1,0 +1,12 @@
+{
+  "name": "Printalizer",
+  "short_name": "Printalizer",
+  "description": "Rewrites STL files so they print better.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#15181c",
+  "theme_color": "#1b1f24",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }],
+  "file_handlers": [{ "action": "./", "accept": { "model/stl": [".stl"], "model/3mf": [".3mf"] } }]
+}

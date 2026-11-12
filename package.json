@@ -8,15 +8,18 @@
   "scripts": {
     "dev": "vite --config app/vite.config.ts --port 8793 --strictPort",
     "build": "vite build --config app/vite.config.ts",
-    "test": "node --test \"core/**/*.test.ts\"",
+    "test": "node --test \"core/**/*.test.ts\" \"features/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "phase0:corpus": "node phase0/fetch-corpus.ts",
     "phase0:run": "node phase0/run.ts",
     "phase0:print": "node phase0/test-print.ts",
     "phase0:3mf": "node phase0/threemf-check.ts",
-    "phase0:view": "vite --config phase0/vite.config.ts --port 8792 --strictPort"
+    "phase0:view": "vite --config phase0/vite.config.ts --port 8792 --strictPort",
+    "new-feature": "node tools/new-feature.ts",
+    "phase0:showcase": "node phase0/showcase.ts"
   },
   "dependencies": {
+    "@fontsource/inter": "5.3.0",
     "fflate": "0.8.3",
     "manifold-3d": "3.5.4",
     "react": "19.1.10",
