@@ -2,7 +2,9 @@
 
 Printalizer rewrites STL and 3MF files so they print better: tented holes, 45° threads, bridge steps, a base chamfer and overhang fill. It runs entirely in your browser, and models never leave your computer. Once loaded it works offline and can be installed as an app.
 
-## Running it
+**Use it:** https://devkriter.github.io/printalizer/
+
+## Running it locally
 
 ```bash
 npm install
