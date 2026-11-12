@@ -6,6 +6,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "dev": "vite --config app/vite.config.ts --port 8793 --strictPort",
+    "build": "vite build --config app/vite.config.ts",
     "test": "node --test \"core/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "phase0:corpus": "node phase0/fetch-corpus.ts",
@@ -17,10 +19,15 @@
   "dependencies": {
     "fflate": "0.8.3",
     "manifold-3d": "3.5.4",
-    "three": "0.186.1"
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "three": "0.186.1",
+    "three-mesh-bvh": "0.9.17"
   },
   "devDependencies": {
     "@types/node": "26.5.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "@types/three": "0.186.0",
     "typescript": "7.0.2",
     "vite": "8.3.5"

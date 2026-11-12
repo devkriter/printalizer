@@ -4,7 +4,7 @@ export interface TriangleSoup {
   /** 9 floats per triangle: x0 y0 z0 x1 y1 z1 x2 y2 z2. */
   positions: Float32Array;
   triCount: number;
-  format: 'binary' | 'ascii';
+  format: 'binary' | 'ascii' | '3mf';
   /** Problems noticed while reading, for example a truncated file. */
   warnings: string[];
 }

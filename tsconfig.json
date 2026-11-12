@@ -14,7 +14,8 @@
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
-    "noEmit": true
+    "noEmit": true,
+    "jsx": "react-jsx"
   },
-  "include": ["core", "phase0"]
+  "include": ["core", "phase0", "app"]
 }

@@ -3,6 +3,7 @@
 import Module from 'manifold-3d';
 import type { Manifold as ManifoldT, ManifoldToplevel } from 'manifold-3d';
 import { parseSTL } from './stl.ts';
+import type { TriangleSoup } from './stl.ts';
 import { boundsOf, clean, diagonal, makeManifold, signedVolume, weld } from './mesh.ts';
 import type { CleanStats, IndexedMesh, TopologyStats } from './mesh.ts';
 
@@ -21,7 +22,7 @@ export type ImportOutcome =
 export interface ImportReport {
   outcome: ImportOutcome;
   reason?: string;
-  format: 'binary' | 'ascii';
+  format: TriangleSoup['format'];
   warnings: string[];
   trianglesIn: number;
   verticesWelded: number;
@@ -67,10 +68,16 @@ function toManifold(w: ManifoldToplevel, vert: Float64Array, tri: Uint32Array, m
 }
 
 export async function importSTL(bytes: Uint8Array): Promise<ImportResult> {
-  const w = await loadManifold();
   const t0 = now();
   const soup = parseSTL(bytes);
+  return importSoup(soup, now() - t0);
+}
+
+/** Turn a triangle soup from any file format into a Manifold solid, repairing it where that is safe. */
+export async function importSoup(soup: TriangleSoup, parseMs = 0): Promise<ImportResult> {
+  const w = await loadManifold();
   const t1 = now();
+  const t0 = t1 - parseMs;
   const b = boundsOf(soup.positions);
   const diag = diagonal(b);
   const tol = Math.max(diag * 1e-7, 1e-6);

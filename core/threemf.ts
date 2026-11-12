@@ -69,29 +69,151 @@ export function write3MF(mesh: IndexedMesh, name: string, extra?: { original: In
   return zipSync(files, { level: 6 });
 }
 
+/** Triangle soup from an indexed mesh, for the import pipeline. */
+export function soupOf(mesh: IndexedMesh): Float32Array {
+  const pos = new Float32Array(mesh.tri.length * 3);
+  for (let i = 0; i < mesh.tri.length; i++) {
+    const v = mesh.tri[i] * 3;
+    pos[i * 3] = mesh.vert[v]; pos[i * 3 + 1] = mesh.vert[v + 1]; pos[i * 3 + 2] = mesh.vert[v + 2];
+  }
+  return pos;
+}
+
+export interface Object3MF {
+  name: string;
+  /** In build (plate) coordinates, with every transform applied. */
+  mesh: IndexedMesh;
+}
+
 export interface Read3MF {
+  /** One entry per build item: what a slicer would place on its plates. */
+  objects: Object3MF[];
+  /** The same meshes, for callers that only need geometry. */
   meshes: IndexedMesh[];
   printalizer?: { data: PrintalizerData; original: IndexedMesh };
   /** All part names in the package, to see what another program kept or added. */
   parts: string[];
 }
 
-/** Minimal reader: plain meshes from every .model part, plus Printalizer's parts when present. */
+type Mat = number[]; // 3MF affine transform: m00 m01 m02 m10 m11 m12 m20 m21 m22 m30 m31 m32 (row vectors)
+const IDENTITY: Mat = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0];
+
+function parseMat(s: string | undefined): Mat {
+  if (!s) return IDENTITY;
+  const m = s.trim().split(/\s+/).map(Number);
+  return m.length === 12 && m.every(Number.isFinite) ? m : IDENTITY;
+}
+/** a then b. */
+function mul(a: Mat, b: Mat): Mat {
+  const r: Mat = new Array(12);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) {
+    let s = i === 3 ? b[9 + j] : 0;
+    for (let k = 0; k < 3; k++) s += a[i * 3 + k] * b[k * 3 + j];
+    r[i * 3 + j] = s;
+  }
+  return r;
+}
+
+function attrs(s: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const m of s.matchAll(/([\w:.-]+)\s*=\s*"([^"]*)"/g)) {
+    out[m[1]] = m[2];
+    const local = m[1].split(':').pop()!;
+    if (!(local in out)) out[local] = m[2];
+  }
+  return out;
+}
+
+interface RawObject { name: string; mesh?: IndexedMesh; components: Array<{ path?: string; objectid: string; transform: Mat }> }
+
+function parseModel(xml: string): Map<string, RawObject> {
+  const objects = new Map<string, RawObject>();
+  for (const om of xml.matchAll(/<object\b([^>]*)>([\s\S]*?)<\/object>/g)) {
+    const a = attrs(om[1]);
+    const body = om[2];
+    const obj: RawObject = { name: a.name ?? '', components: [] };
+    const mesh = /<mesh\b[^>]*>([\s\S]*?)<\/mesh>/.exec(body);
+    if (mesh) {
+      const vert: number[] = [];
+      for (const v of mesh[1].matchAll(/<vertex\b([^>]*)\/?>/g)) {
+        const va = attrs(v[1]);
+        vert.push(+va.x, +va.y, +va.z);
+      }
+      const tri: number[] = [];
+      for (const t of mesh[1].matchAll(/<triangle\b([^>]*)\/?>/g)) {
+        const ta = attrs(t[1]);
+        tri.push(+ta.v1, +ta.v2, +ta.v3);
+      }
+      obj.mesh = { vert: new Float64Array(vert), tri: new Uint32Array(tri) };
+    }
+    for (const c of body.matchAll(/<component\b([^>]*)\/?>/g)) {
+      const ca = attrs(c[1]);
+      obj.components.push({ path: ca.path, objectid: ca.objectid, transform: parseMat(ca.transform) });
+    }
+    objects.set(a.id, obj);
+  }
+  return objects;
+}
+
+/**
+ * Reads the build items of a 3MF, resolving components (also in other model parts, as Bambu
+ * Studio and OrcaSlicer write them) and all transforms. Printalizer's own parts are returned too.
+ */
 export function read3MF(bytes: Uint8Array): Read3MF {
   const files = unzipSync(bytes);
-  const meshes: IndexedMesh[] = [];
-  for (const [path, data] of Object.entries(files)) {
-    if (!path.toLowerCase().endsWith('.model')) continue;
-    const xml = strFromU8(data);
-    for (const m of xml.matchAll(/<mesh>([\s\S]*?)<\/mesh>/g)) {
-      const vert: number[] = [];
-      for (const v of m[1].matchAll(/<vertex\s+x="([^"]+)"\s+y="([^"]+)"\s+z="([^"]+)"/g)) vert.push(+v[1], +v[2], +v[3]);
-      const tri: number[] = [];
-      for (const t of m[1].matchAll(/<triangle\s+v1="(\d+)"\s+v2="(\d+)"\s+v3="(\d+)"/g)) tri.push(+t[1], +t[2], +t[3]);
-      meshes.push({ vert: new Float64Array(vert), tri: new Uint32Array(tri) });
+  const norm = (p: string) => p.replace(/^\//, '');
+  const lower = new Map(Object.keys(files).map((k) => [k.toLowerCase(), k]));
+  const models = new Map<string, Map<string, RawObject>>();
+  const modelAt = (path: string) => {
+    const key = lower.get(norm(path).toLowerCase());
+    if (!key) return null;
+    let m = models.get(key);
+    if (!m) { m = parseModel(strFromU8(files[key])); models.set(key, m); }
+    return m;
+  };
+  // The root model is the target of the 3dmodel relationship, usually 3D/3dmodel.model.
+  let rootPath = '3D/3dmodel.model';
+  const rels = files['_rels/.rels'];
+  if (rels) {
+    const r = /Target="([^"]+)"[^>]*Type="[^"]*3dmodel"/.exec(strFromU8(rels)) ?? /Type="[^"]*3dmodel"[^>]*Target="([^"]+)"/.exec(strFromU8(rels));
+    if (r) rootPath = norm(r[1]);
+  }
+  const root = modelAt(rootPath);
+  const objects: Object3MF[] = [];
+  if (root) {
+    const rootXml = strFromU8(files[lower.get(rootPath.toLowerCase())!]);
+    const build = /<build\b[^>]*>([\s\S]*?)<\/build>/.exec(rootXml);
+    const collect = (model: Map<string, RawObject>, id: string, t: Mat, vert: number[], tri: number[], depth: number) => {
+      const o = model.get(id);
+      if (!o || depth > 16) return;
+      if (o.mesh) {
+        const base = vert.length / 3;
+        const v = o.mesh.vert;
+        for (let i = 0; i < v.length; i += 3) {
+          vert.push(
+            v[i] * t[0] + v[i + 1] * t[3] + v[i + 2] * t[6] + t[9],
+            v[i] * t[1] + v[i + 1] * t[4] + v[i + 2] * t[7] + t[10],
+            v[i] * t[2] + v[i + 1] * t[5] + v[i + 2] * t[8] + t[11],
+          );
+        }
+        for (const i of o.mesh.tri) tri.push(i + base);
+      }
+      for (const c of o.components) {
+        const target = c.path ? modelAt(c.path) : model;
+        if (target) collect(target, c.objectid, mul(c.transform, t), vert, tri, depth + 1);
+      }
+    };
+    const items = build ? [...build[1].matchAll(/<item\b([^>]*)\/?>/g)].map((m) => attrs(m[1])) : [];
+    for (const item of items) {
+      const vert: number[] = [], tri: number[] = [];
+      collect(root, item.objectid, parseMat(item.transform), vert, tri, 0);
+      if (!tri.length) continue;
+      const o = root.get(item.objectid)!;
+      const fallback = o.components[0]?.path?.split('/').pop()?.replace(/(\.stl)?(_\d+)?\.model$/i, '') ?? '';
+      objects.push({ name: o.name || fallback || `Object ${objects.length + 1}`, mesh: { vert: new Float64Array(vert), tri: new Uint32Array(tri) } });
     }
   }
-  const out: Read3MF = { meshes, parts: Object.keys(files).sort() };
+  const out: Read3MF = { objects, meshes: objects.map((o) => o.mesh), parts: Object.keys(files).sort() };
   if (files[EDITS_PATH] && files[ORIGINAL_PATH]) {
     const soup = parseSTL(files[ORIGINAL_PATH]);
     const tri = new Uint32Array(soup.triCount * 3).map((_, i) => i);
